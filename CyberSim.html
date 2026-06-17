@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyberSim</title>
+<style>
+body{margin:0;background:#000;color:#1eff95;font-family:Consolas,monospace;overflow:hidden}
+#matrix{position:fixed;inset:0;z-index:-1}
+#top{height:42px;background:#111;border-bottom:1px solid #1eff95;padding:8px}
+button{background:#000;color:#1eff95;border:1px solid #1eff95;padding:6px 12px;cursor:pointer}
+#wrap{display:flex;height:calc(100vh - 58px)}
+#editor{width:50%;background:#0a0f0d;color:#d8ffe9;border:none;outline:none;padding:10px;resize:none}
+#right{width:50%;display:flex;flex-direction:column}
+#terminal{flex:1;background:#000;padding:10px;overflow:auto;white-space:pre-wrap}
+#barbox{height:16px;border-top:1px solid #1eff95}
+#bar{height:100%;width:0%;background:#1eff95}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div id="top">
+<button onclick="runSimulation()">RUN</button>
+<button onclick="saveCode()">SAVE</button>
+<button onclick="clearCode()">CLEAR</button>
+</div>
+<div id="wrap">
+<textarea id="editor" spellcheck="false"></textarea>
+<div id="right">
+<div id="terminal">CyberSim Ready</div>
+<div id="barbox"><div id="bar"></div></div>
+</div>
+</div>
+<script>
+const editor=document.getElementById('editor');
+editor.value=localStorage.getItem('cybersim_code')||'';
+editor.addEventListener('input',()=>localStorage.setItem('cybersim_code',editor.value));
+
+function saveCode(){
+ localStorage.setItem('cybersim_code',editor.value);
+ alert('Проект сохранён в браузере');
+}
+function clearCode(){
+ localStorage.removeItem('cybersim_code');
+ editor.value='';
+}
+
+const terminal=document.getElementById('terminal');
+const bar=document.getElementById('bar');
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function runSimulation(){
+ terminal.textContent='';
+ const lines=editor.value.split('\n').filter(x=>x.trim());
+ const db={
+  connect:['Secure relay established','Encrypted node connected'],
+  scan:['Scanning virtual ports...','Hidden nodes detected'],
+  ping:['Node responded successfully','Latency 12ms'],
+  build:['Project compiled successfully'],
+  compile:['Compilation complete'],
+  create:['Virtual file created'],
+  delete:['Virtual file removed'],
+  help:['Commands: help connect scan ping build compile create delete fake'],
+  fake:['Generating cinematic telemetry...']
+ };
+ bar.style.width='0%';
+ for(let i=0;i<lines.length;i++){
+   let cmd=lines[i].split(' ')[0].toLowerCase();
+   await sleep(250);
+   let out=db[cmd] ? db[cmd][Math.floor(Math.random()*db[cmd].length)] : 'unknown virtual command';
+   terminal.textContent += out + "\\n";
+   bar.style.width=((i+1)/lines.length*100)+'%';
+   terminal.scrollTop=terminal.scrollHeight;
+ }
+ terminal.textContent += "\\nsimulation finished";
+}
+
+const c=document.getElementById('matrix');
+const x=c.getContext('2d');
+function rs(){c.width=innerWidth;c.height=innerHeight}
+rs(); addEventListener('resize',rs);
+const drops=[]; const fs=16;
+function resetDrops(){drops.length=0; for(let i=0;i<c.width/fs;i++) drops[i]=1;}
+resetDrops();
+function draw(){
+ x.fillStyle='rgba(0,0,0,.05)'; x.fillRect(0,0,c.width,c.height);
+ x.fillStyle='#1eff95'; x.font=fs+'px monospace';
+ for(let i=0;i<drops.length;i++){
+   const t=Math.random()>0.5?'1':'0';
+   x.fillText(t,i*fs,drops[i]*fs);
+   if(drops[i]*fs>c.height && Math.random()>0.975) drops[i]=0;
+   drops[i]++;
+ }
+}
+setInterval(draw,30);
+</script>
+</body>
+</html>
